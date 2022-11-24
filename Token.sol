@@ -30,7 +30,7 @@ contract Token is Ownable, ERC721, ERC721URIStorage {
 
     string baseUri = "www.google.pl";
 
-    IERC20 usdcToken = IERC20(0x6035fBdD08602a9439702174BE95b75868E3EF31);
+    IERC20 usdcToken = IERC20(0x7F38656a07c54249819C4a7a802954f0e05cd6DE);
     //100 USDC = 100000000
     // 10 usdc = 10000000
 
@@ -67,15 +67,28 @@ contract Token is Ownable, ERC721, ERC721URIStorage {
     }
 
 
-    function mint(address recipient, string memory hash)
+    function mint(address recipient, string[] memory hash)
     external
-    returns (uint256 tokenId)
+    returns (uint256[10] memory tokensIds)
     {
         require(mintAvailable, "Mint is stopped");
         require(_tokenSupply.current() < _maxSupply, "All tokens minted");
+        usdcToken.transferFrom(msg.sender, owner(), _price * hash.length);
+        for(uint256 i = 0; i< hash.length; i++){
+                tokensIds[i] = mintToken(recipient, hash[i]);
+        }
+        
+        return tokensIds;
+    }
+
+    function mintToken(address recipient, string memory hash)
+    internal
+    returns (uint256 tokenId)
+    {
+        require(_tokenSupply.current() < _maxSupply, "All tokens minted");
         require(bytes(hash).length > 0); // dev: Hash can not be empty!
+        require(bytes(hash).length > 0); // dev: add checking uniq
         uint256 newItemId = _tokenSupply.current() + 1;
-        usdcToken.transferFrom(msg.sender, owner(), _price);
         _tokenSupply.increment();
         _safeMint(recipient, newItemId);
         _setTokenURI(newItemId, hash);
